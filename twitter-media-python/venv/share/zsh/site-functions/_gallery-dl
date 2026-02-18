@@ -1,0 +1,102 @@
+#compdef gallery-dl
+
+local curcontext="$curcontext"
+typeset -A opt_args
+
+local rc=1
+_arguments -s -S \
+{-h,--help}'[Print this help message and exit]' \
+--version'[Print program version and exit]' \
+{-f,--filename}'[Filename format string for downloaded files ('\''/O'\'' for "original" filenames)]':'<format>' \
+{-d,--destination}'[Target location for file downloads]':'<path>' \
+{-D,--directory}'[Exact location for file downloads]':'<path>' \
+{-X,--extractors}'[Load external extractors from PATH]':'<path>' \
+{-a,--user-agent}'[User-Agent request header]':'<ua>' \
+--clear-cache'[Delete cached login sessions, cookies, etc. for MODULE (ALL to delete everything)]':'<module>' \
+--compat'[Restore legacy '\''category'\'' names]' \
+{-U,--update-check}'[Check if a newer version is available]' \
+{-i,--input-file}'[Download URLs found in FILE ('\''-'\'' for stdin). More than one --input-file can be specified]':'<file>':_files \
+{-I,--input-file-comment}'[Download URLs found in FILE. Comment them out after they were downloaded successfully.]':'<file>':_files \
+{-x,--input-file-delete}'[Download URLs found in FILE. Delete them after they were downloaded successfully.]':'<file>':_files \
+--no-input'[Do not prompt for passwords/tokens]' \
+{-q,--quiet}'[Activate quiet mode]' \
+{-w,--warning}'[Print only warnings and errors]' \
+{-v,--verbose}'[Print various debugging information]' \
+{-g,--get-urls}'[Print URLs instead of downloading]' \
+{-G,--resolve-urls}'[Print URLs instead of downloading; resolve intermediary URLs]' \
+{-j,--dump-json}'[Print JSON information]' \
+{-J,--resolve-json}'[Print JSON information; resolve intermediary URLs]' \
+{-s,--simulate}'[Simulate data extraction; do not download anything]' \
+{-E,--extractor-info}'[Print extractor defaults and settings]' \
+{-K,--list-keywords}'[Print a list of available keywords and example values for the given URLs]' \
+{-e,--error-file}'[Add input URLs which returned an error to FILE]':'<file>':_files \
+{-N,--print}'[Write FORMAT during EVENT (default '\''prepare'\'') to standard output instead of downloading files. Can be used multiple times. Examples: '\''id'\'' or '\''post:{md5\[:8\]}'\'']':'<[event:]format>' \
+--Print'[Like --print, but downloads files as well]':'<[event:]format>' \
+--print-to-file'[Append FORMAT during EVENT to FILE instead of downloading files. Can be used multiple times]':'<[event:]format file>' \
+--Print-to-file'[Like --print-to-file, but downloads files as well]':'<[event:]format file>' \
+--list-modules'[Print a list of available extractor modules]' \
+--list-extractors'[Print a list of extractor classes with description, (sub)category and example URL]':'<[categories]>' \
+--write-log'[Write logging output to FILE]':'<file>':_files \
+--write-unsupported'[Write URLs, which get emitted by other extractors but cannot be handled, to FILE]':'<file>':_files \
+--write-pages'[Write downloaded intermediary pages to files in the current directory to debug problems]' \
+--print-traffic'[Display sent and read HTTP traffic]' \
+--no-colors'[Do not emit ANSI color codes in output]' \
+{-R,--retries}'[Maximum number of retries for failed HTTP requests or -1 for infinite retries (default: 4)]':'<n>' \
+--http-timeout'[Timeout for HTTP connections (default: 30.0)]':'<seconds>' \
+--proxy'[Use the specified proxy]':'<url>' \
+--source-address'[Client-side IP address to bind to]':'<ip>' \
+{-4,--force-ipv4}'[Make all connections via IPv4]' \
+{-6,--force-ipv6}'[Make all connections via IPv6]' \
+--no-check-certificate'[Disable HTTPS certificate validation]' \
+{-r,--limit-rate}'[Maximum download rate (e.g. 500k, 2.5M, or 800k-2M)]':'<rate>' \
+--chunk-size'[Size of in-memory data chunks (default: 32k)]':'<size>' \
+--sleep'[Number of seconds to wait before each download. This can be either a constant value or a range (e.g. 2.7 or 2.0-3.5)]':'<seconds>' \
+--sleep-skip'[Number of seconds to wait after skipping a file download]':'<seconds>' \
+--sleep-request'[Number of seconds to wait between HTTP requests during data extraction]':'<seconds>' \
+--sleep-429'[Number of seconds to wait when receiving a '\''429 Too Many Requests'\'' response]':'<seconds>' \
+--sleep-extractor'[Number of seconds to wait before starting data extraction for an input URL]':'<seconds>' \
+--no-part'[Do not use .part files]' \
+--no-skip'[Do not skip downloads; overwrite existing files]' \
+--no-mtime'[Do not set file modification times according to Last-Modified HTTP response headers]' \
+--no-download'[Do not download any files]' \
+{-o,--option}'[Additional options. Example: -o browser=firefox]':'<key=value>' \
+{-c,--config}'[Additional configuration files]':'<file>':_files \
+--config-yaml'[Additional configuration files in YAML format]':'<file>':_files \
+--config-toml'[Additional configuration files in TOML format]':'<file>':_files \
+--config-create'[Create a basic configuration file]' \
+--config-status'[Show configuration file status]' \
+--config-open'[Open configuration file in external application]' \
+--config-ignore'[Do not read default configuration files]' \
+{-u,--username}'[Username to login with]':'<user>' \
+{-p,--password}'[Password belonging to the given username]':'<pass>' \
+--netrc'[Enable .netrc authentication data]' \
+{-C,--cookies}'[File to load additional cookies from]':'<file>':_files \
+--cookies-export'[Export session cookies to FILE]':'<file>':_files \
+--cookies-from-browser'[Name of the browser to load cookies from, with optional domain prefixed with '\''/'\'', keyring name prefixed with '\''+'\'', profile prefixed with '\'':'\'', and container prefixed with '\''::'\'' ('\''none'\'' for no container (default), '\''all'\'' for all containers)]':'<browser[/domain][+keyring][:profile][::container]>' \
+{-A,--abort}'[Stop current extractor(s) after N consecutive file downloads were skipped. Specify a TARGET to set how many levels to ascend or to which subcategory to jump to. Examples: '\''-A 3'\'', '\''-A 3:2'\'', '\''-A 3:manga'\'']':'<n[:target]>' \
+{-T,--terminate}'[Stop current & parent extractors and proceed with the next input URL after N consecutive file downloads were skipped]':'<n>' \
+--filesize-min'[Do not download files smaller than SIZE (e.g. 500k or 2.5M)]':'<size>' \
+--filesize-max'[Do not download files larger than SIZE (e.g. 500k or 2.5M)]':'<size>' \
+--download-archive'[Record successfully downloaded files in FILE and skip downloading any file already in it]':'<file>':_files \
+--range'[Index range(s) specifying which files to download. These can be either a constant value, range, or slice (e.g. '\''5'\'', '\''8-20'\'', or '\''1:24:3'\'')]':'<range>' \
+--post-range'[Like '\''--range'\'', but for posts]':'<range>' \
+--chapter-range'[Like '\''--range'\'', but for child extractors handling manga chapters, external URLs, etc.]':'<range>' \
+--filter'[Python expression controlling which files to download. Files for which the expression evaluates to False are ignored. Available keys are the filename-specific ones listed by '\''-K'\''. Example: --filter "image_width >= 1000 and rating in ('\''s'\'', '\''q'\'')"]':'<expr>' \
+--post-filter'[Like '\''--filter'\'', but for posts]':'<expr>' \
+--chapter-filter'[Like '\''--filter'\'', but for child extractors handling manga chapters, external URLs, etc.]':'<expr>' \
+{-P,--postprocessor}'[Activate the specified post processor]':'<name>' \
+--no-postprocessors'[Do not run any post processors]' \
+{-O,--postprocessor-option}'[Additional post processor options]':'<key=value>' \
+--write-metadata'[Write metadata to separate JSON files]' \
+--write-info-json'[Write gallery metadata to a info.json file]' \
+--write-tags'[Write image tags to separate text files]' \
+--zip'[Store downloaded files in a ZIP archive]' \
+--cbz'[Store downloaded files in a CBZ archive]' \
+--mtime'[Set file modification times according to metadata selected by NAME. Examples: '\''date'\'' or '\''status\[date\]'\'']':'<name>' \
+--rename'[Rename previously downloaded files from FORMAT to the current filename format]':'<format>' \
+--rename-to'[Rename previously downloaded files from the current filename format to FORMAT]':'<format>' \
+--ugoira'[Convert Pixiv Ugoira to FMT using FFmpeg. Supported formats are '\''webm'\'', '\''mp4'\'', '\''gif'\'', '\''vp8'\'', '\''vp9'\'', '\''vp9-lossless'\'', '\''copy'\'', '\''zip'\''.]':'<fmt>' \
+--exec'[Execute CMD for each downloaded file. Supported replacement fields are {} or {_path}, {_directory}, {_filename}. Example: --exec "convert {} {}.png && rm {}"]':'<cmd>' \
+--exec-after'[Execute CMD after all files were downloaded. Example: --exec-after "cd {_directory} && convert * ../doc.pdf"]':'<cmd>' && rc=0
+
+return rc
