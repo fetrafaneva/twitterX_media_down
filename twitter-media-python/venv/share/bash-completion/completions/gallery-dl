@@ -1,0 +1,17 @@
+_gallery_dl()
+{
+    local cur prev
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+    if [[ "${prev}" =~ ^(-i|--input-file|-I|--input-file-comment|-x|--input-file-delete|-e|--error-file|--write-log|--write-unsupported|-c|--config|--config-yaml|--config-toml|-C|--cookies|--cookies-export|--download-archive)$ ]]; then
+        COMPREPLY=( $(compgen -f -- "${cur}") )
+    elif [[ "${prev}" =~ ^()$ ]]; then
+        COMPREPLY=( $(compgen -d -- "${cur}") )
+    else
+        COMPREPLY=( $(compgen -W "--help --version --filename --destination --directory --extractors --user-agent --clear-cache --compat --update-check --input-file --input-file-comment --input-file-delete --no-input --quiet --warning --verbose --get-urls --resolve-urls --dump-json --resolve-json --simulate --extractor-info --list-keywords --error-file --print --Print --print-to-file --Print-to-file --list-modules --list-extractors --write-log --write-unsupported --write-pages --print-traffic --no-colors --retries --http-timeout --proxy --source-address --force-ipv4 --force-ipv6 --no-check-certificate --limit-rate --chunk-size --sleep --sleep-skip --sleep-request --sleep-429 --sleep-extractor --no-part --no-skip --no-mtime --no-download --option --config --config-yaml --config-toml --config-create --config-status --config-open --config-ignore --ignore-config --username --password --netrc --cookies --cookies-export --cookies-from-browser --abort --terminate --filesize-min --filesize-max --download-archive --range --post-range --chapter-range --filter --post-filter --chapter-filter --postprocessor --no-postprocessors --postprocessor-option --write-metadata --write-info-json --write-infojson --write-tags --zip --cbz --mtime --mtime-from-date --rename --rename-to --ugoira --ugoira-conv --ugoira-conv-lossless --ugoira-conv-copy --exec --exec-after" -- "${cur}") )
+    fi
+}
+
+complete -F _gallery_dl gallery-dl
