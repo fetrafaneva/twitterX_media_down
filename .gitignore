@@ -37,3 +37,12 @@ build/
 
 # Coverage reports
 coverage/
+
+# secrets
+cookies.txt
+*.cookies.txt
+
+# python
+venv/
+__pycache__/
+downloads/

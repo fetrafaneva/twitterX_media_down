@@ -1,44 +1,44 @@
 from flask import Flask, request, jsonify
-import snscrape.modules.twitter as sntwitter
+import subprocess
+import sys
+import os
 
 app = Flask(__name__)
 
+DOWNLOAD_DIR = "downloads/twitter"
+
 @app.route("/media", methods=["POST"])
-def get_media():
+def download_media():
+    data = request.get_json()
+    username = data.get("username")
+
+    if not username:
+        return jsonify({"error": "username required"}), 400
+
+    cmd = [
+        sys.executable,
+        "-m",
+        "gallery_dl",
+        "--cookies",
+        "C:/Users/ASUS/Desktop/twitterX_media_down/cookies.txt",
+        f"https://x.com/{username}"
+    ]
+
     try:
-        data = request.get_json()
-        username = data.get("username")
+        subprocess.run(cmd, check=True)
 
-        if not username:
-            return jsonify({"error": "username requis"}), 400
-
-        media_urls = []
-        max_tweets = 50  # limite pour éviter crash
-
-        for i, tweet in enumerate(
-            sntwitter.TwitterUserScraper(username).get_items()
-        ):
-            if i >= max_tweets:
-                break
-
-            if not tweet.media:
-                continue
-
-            for media in tweet.media:
-                url = getattr(media, "fullUrl", None)
-                if url:
-                    media_urls.append(url)
+        user_dir = os.path.join(DOWNLOAD_DIR, username)
+        files = os.listdir(user_dir) if os.path.exists(user_dir) else []
 
         return jsonify({
             "username": username,
-            "count": len(media_urls),
-            "media": media_urls
+            "count": len(files),
+            "files": files
         })
 
-    except Exception as e:
-        print("❌ ERREUR:", e)
+    except subprocess.CalledProcessError as e:
         return jsonify({"error": str(e)}), 500
 
 
 if __name__ == "__main__":
-    app.run(port=5000, debug=True)
+    app.run(debug=True)
