@@ -8,6 +8,7 @@ import zipfile
 import shutil
 import time
 import json
+import threading
 
 app = Flask(__name__)
 CORS(app)
@@ -37,6 +38,17 @@ def progress(username):
             time.sleep(0.5)
 
     return Response(event_stream(), mimetype="text/event-stream")
+
+def count_files_realtime(username, user_dir):
+    while True:
+        if PROGRESS.get(username, {}).get("status") != "downloading":
+            break
+
+        if user_dir.exists():
+            count = sum(1 for f in user_dir.rglob("*") if f.is_file())
+            PROGRESS[username]["count"] = count
+
+        time.sleep(1)
 
 
 # ======================
@@ -75,9 +87,19 @@ def download_media():
     try:
         PROGRESS[username] = {
             "status": "downloading",
-            "message": "Téléchargement des médias…"
+            "message": "Téléchargement des médias…",
+            "count": 0
         }
 
+        # lancer le compteur en parallèle
+        counter_thread = threading.Thread(
+            target=count_files_realtime,
+            args=(username, user_dir),
+            daemon=True
+        )
+        counter_thread.start()
+
+        # téléchargement
         subprocess.run(cmd, check=True)
 
         if not user_dir.exists() or not any(user_dir.rglob("*")):
@@ -89,9 +111,11 @@ def download_media():
 
         PROGRESS[username] = {
             "status": "zipping",
-            "message": "Création du ZIP…"
+            "message": "Création du ZIP…",
+            "count": PROGRESS[username].get("count", 0)
         }
 
+        # création du zip
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file in user_dir.rglob("*"):
                 if file.is_file():
@@ -99,7 +123,8 @@ def download_media():
 
         PROGRESS[username] = {
             "status": "done",
-            "message": "Téléchargement terminé"
+            "message": "Téléchargement terminé",
+            "count": PROGRESS[username].get("count", 0)
         }
 
         return send_file(
@@ -117,5 +142,6 @@ def download_media():
         return jsonify({"error": "download failed"}), 500
 
 
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) 

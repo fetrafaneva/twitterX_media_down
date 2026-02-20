@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 
 export default function Home() {
+  const [fileCount, setFileCount] = useState(0);
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
@@ -17,7 +18,12 @@ export default function Home() {
 
     source.onmessage = (e) => {
       const data = JSON.parse(e.data);
+
       setStatus(data.message);
+
+      if (data.count !== undefined) {
+        setFileCount(data.count);
+      }
 
       switch (data.status) {
         case "starting":
@@ -96,7 +102,8 @@ export default function Home() {
 
         {status && (
           <p className="text-sm text-gray-600 text-center">
-            {status} ({progress}%)
+            {status}
+            {fileCount > 0 && ` (${fileCount} fichiers)`}
           </p>
         )}
       </div>
