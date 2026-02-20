@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify, send_file, Response
+from flask_cors import CORS
 import subprocess
 import sys
 import os
@@ -9,6 +10,7 @@ import time
 import json
 
 app = Flask(__name__)
+CORS(app)
 
 DOWNLOAD_DIR = Path.home() / "Downloads" / "twitter_media"
 
