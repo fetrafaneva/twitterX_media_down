@@ -1,34 +1,52 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function Home() {
   const [username, setUsername] = useState("");
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  const [progress, setProgress] = useState(0);
 
+  // 🔁 écouter la progression depuis Flask
   useEffect(() => {
     if (!loading || !username) return;
 
     const clean = username.replace("@", "");
-    const evtSource = new EventSource(
-      `http://127.0.0.1:5000/progress/${clean}`
-    );
+    const source = new EventSource(`http://127.0.0.1:5000/progress/${clean}`);
 
-    evtSource.onmessage = (e) => {
+    source.onmessage = (e) => {
       const data = JSON.parse(e.data);
       setStatus(data.message);
 
-      if (["done", "error"].includes(data.status)) {
-        evtSource.close();
+      switch (data.status) {
+        case "starting":
+          setProgress(10);
+          break;
+        case "downloading":
+          setProgress(60);
+          break;
+        case "zipping":
+          setProgress(85);
+          break;
+        case "done":
+          setProgress(100);
+          source.close();
+          break;
+        case "error":
+          setProgress(0);
+          source.close();
+          break;
       }
     };
 
-    return () => evtSource.close();
+    return () => source.close();
   }, [loading, username]);
 
+  // ⬇️ lancer le téléchargement
   const handleDownload = async () => {
     setLoading(true);
+    setProgress(5);
     setStatus("Initialisation…");
 
     const res = await fetch("http://127.0.0.1:5000/media", {
@@ -66,10 +84,20 @@ export default function Home() {
           {loading ? "Téléchargement…" : "Télécharger"}
         </button>
 
-        {status && (
-          <div className="text-sm text-gray-600 text-center">
-            {status}
+        {/* BARRE DE PROGRESSION */}
+        {loading && (
+          <div className="w-full bg-gray-200 rounded h-3 overflow-hidden">
+            <div
+              className="bg-blue-600 h-3 transition-all duration-500"
+              style={{ width: `${progress}%` }}
+            />
           </div>
+        )}
+
+        {status && (
+          <p className="text-sm text-gray-600 text-center">
+            {status} ({progress}%)
+          </p>
         )}
       </div>
     </main>
