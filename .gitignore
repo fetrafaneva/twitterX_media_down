@@ -55,3 +55,9 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+node_modules
+.next
+venv
+cookies.txt
+Downloads/twitter_media

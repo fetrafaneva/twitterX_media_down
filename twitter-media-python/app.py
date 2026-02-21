@@ -2,32 +2,28 @@ from flask import Flask, request, jsonify, send_file, Response
 from flask_cors import CORS
 import subprocess
 import sys
-import os
 from pathlib import Path
 import zipfile
-import shutil
 import time
 import json
 import threading
+import os
 
 app = Flask(__name__)
 CORS(app)
 
 DOWNLOAD_DIR = Path.home() / "Downloads" / "twitter_media"
-
-#  état de progression en mémoire
 PROGRESS = {}
 
-# ======================
-#  STREAM PROGRESSION
-# ======================
+# ================
+# STREAM PROGRESS 
+# ================
 @app.route("/progress/<username>")
 def progress(username):
     def event_stream():
         last = None
         while True:
             current = PROGRESS.get(username)
-
             if current != last and current is not None:
                 yield f"data: {json.dumps(current)}\n\n"
                 last = current
@@ -39,20 +35,18 @@ def progress(username):
 
     return Response(event_stream(), mimetype="text/event-stream")
 
-def count_files_realtime(username, user_dir):
-    while True:
-        if PROGRESS.get(username, {}).get("status") != "downloading":
-            break
 
+def count_files(username, user_dir):
+    while PROGRESS.get(username, {}).get("status") == "downloading":
         if user_dir.exists():
-            count = sum(1 for f in user_dir.rglob("*") if f.is_file())
-            PROGRESS[username]["count"] = count
-
-        time.sleep(1)
+            PROGRESS[username]["count"] = sum(
+                1 for f in user_dir.rglob("*") if f.is_file()
+            )
+        time.sleep(0.5)
 
 
 # ======================
-#  DOWNLOAD MEDIA
+# DOWNLOAD MEDIA
 # ======================
 @app.route("/media", methods=["POST"])
 def download_media():
@@ -65,12 +59,14 @@ def download_media():
     username = username.lstrip("@").strip().lower()
     DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-    user_dir = DOWNLOAD_DIR / username
+    # DOSSIER UTILISE PAR GALLERY-DL
+    user_dir = DOWNLOAD_DIR / "twitter" / username
     zip_path = DOWNLOAD_DIR / f"{username}-media.zip"
 
     PROGRESS[username] = {
         "status": "starting",
-        "message": "Démarrage du téléchargement…"
+        "message": "Initialisation…",
+        "count": 0
     }
 
     cmd = [
@@ -85,22 +81,16 @@ def download_media():
     ]
 
     try:
-        PROGRESS[username] = {
-            "status": "downloading",
-            "message": "Téléchargement des médias…",
-            "count": 0
-        }
+        PROGRESS[username]["status"] = "downloading"
+        PROGRESS[username]["message"] = "Téléchargement des médias…"
 
-        # lancer le compteur en parallèle
-        counter_thread = threading.Thread(
-            target=count_files_realtime,
+        threading.Thread(
+            target=count_files,
             args=(username, user_dir),
             daemon=True
-        )
-        counter_thread.start()
+        ).start()
 
-        # téléchargement
-        subprocess.run(cmd, check=True)
+        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL)
 
         if not user_dir.exists() or not any(user_dir.rglob("*")):
             PROGRESS[username] = {
@@ -109,23 +99,16 @@ def download_media():
             }
             return jsonify({"error": "no media"}), 404
 
-        PROGRESS[username] = {
-            "status": "zipping",
-            "message": "Création du ZIP…",
-            "count": PROGRESS[username].get("count", 0)
-        }
+        PROGRESS[username]["status"] = "zipping"
+        PROGRESS[username]["message"] = "Création du ZIP…"
 
-        # création du zip
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file in user_dir.rglob("*"):
                 if file.is_file():
                     zipf.write(file, file.relative_to(user_dir))
 
-        PROGRESS[username] = {
-            "status": "done",
-            "message": "Téléchargement terminé",
-            "count": PROGRESS[username].get("count", 0)
-        }
+        PROGRESS[username]["status"] = "done"
+        PROGRESS[username]["message"] = "Téléchargement terminé"
 
         return send_file(
             zip_path,
@@ -142,6 +125,5 @@ def download_media():
         return jsonify({"error": "download failed"}), 500
 
 
-
 if __name__ == "__main__":
-    app.run(debug=True) 
+    app.run(debug=True)
