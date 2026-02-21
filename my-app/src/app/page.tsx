@@ -9,7 +9,7 @@ export default function Home() {
   const [status, setStatus] = useState("");
   const [progress, setProgress] = useState(0);
 
-  // 🔁 écouter la progression depuis Flask
+  // écouter la progression depuis Flask
   useEffect(() => {
     if (!loading || !username) return;
 
@@ -49,7 +49,7 @@ export default function Home() {
     return () => source.close();
   }, [loading, username]);
 
-  // ⬇️ lancer le téléchargement
+  // lancer le téléchargement
   const handleDownload = async () => {
     setLoading(true);
     setProgress(5);
