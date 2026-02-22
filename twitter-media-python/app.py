@@ -8,107 +8,162 @@ import time
 import json
 import threading
 import os
+import logging
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
 CORS(app)
 
 DOWNLOAD_DIR = Path.home() / "Downloads" / "twitter_media"
-PROGRESS = {}
+PROGRESS: dict = {}
+PROGRESS_LOCK = threading.Lock()
+COOKIES_PATH = "C:/Users/ASUS/Desktop/twitterX_media_down/cookies.txt"
+DOWNLOAD_TIMEOUT = 300  # secondes
 
-# ================
-# STREAM PROGRESS 
-# ================
+
+def set_progress(username: str, status: str, message: str, count: int | None = None):
+    with PROGRESS_LOCK:
+        entry = {"status": status, "message": message}
+        if count is not None:
+            entry["count"] = count
+        elif username in PROGRESS:
+            entry["count"] = PROGRESS[username].get("count", 0)
+        else:
+            entry["count"] = 0
+        PROGRESS[username] = entry
+
+
+def cleanup_progress(username: str, delay: int = 30):
+    """Supprime l'entrée PROGRESS après un délai pour éviter les fuites mémoire."""
+    def _clean():
+        time.sleep(delay)
+        with PROGRESS_LOCK:
+            PROGRESS.pop(username, None)
+    threading.Thread(target=_clean, daemon=True).start()
+
+
 @app.route("/progress/<username>")
-def progress(username):
+def progress(username: str):
     def event_stream():
+        timeout = 400  # secondes max d'écoute
+        elapsed = 0
+
+        # Attendre que PROGRESS soit initialisé (max 5s)
+        for _ in range(10):
+            with PROGRESS_LOCK:
+                if username in PROGRESS:
+                    break
+            time.sleep(0.5)
+        else:
+            yield f"data: {json.dumps({'status': 'error', 'message': 'Session introuvable'})}\n\n"
+            return
+
         last = None
-        while True:
-            current = PROGRESS.get(username)
+        while elapsed < timeout:
+            with PROGRESS_LOCK:
+                current = PROGRESS.get(username)
+
             if current != last and current is not None:
                 yield f"data: {json.dumps(current)}\n\n"
-                last = current
+                last = dict(current)
 
             if current and current["status"] in ["done", "error"]:
                 break
 
             time.sleep(0.5)
+            elapsed += 0.5
+        else:
+            yield f"data: {json.dumps({'status': 'error', 'message': 'Timeout SSE dépassé'})}\n\n"
 
     return Response(event_stream(), mimetype="text/event-stream")
 
 
-def count_files(username, user_dir):
-    while PROGRESS.get(username, {}).get("status") == "downloading":
+def count_files(username: str, user_dir: Path):
+    while True:
+        with PROGRESS_LOCK:
+            status = PROGRESS.get(username, {}).get("status")
+        if status != "downloading":
+            break
         if user_dir.exists():
-            PROGRESS[username]["count"] = sum(
-                1 for f in user_dir.rglob("*") if f.is_file()
-            )
+            count = sum(1 for f in user_dir.rglob("*") if f.is_file())
+            with PROGRESS_LOCK:
+                if username in PROGRESS:
+                    PROGRESS[username]["count"] = count
         time.sleep(0.5)
 
 
-# ======================
-# DOWNLOAD MEDIA
-# ======================
 @app.route("/media", methods=["POST"])
 def download_media():
-    data = request.get_json()
-    username = data.get("username")
+    data = request.get_json(silent=True)  # silent=True évite une exception si le JSON est malformé
+    if not data:
+        return jsonify({"error": "Corps JSON invalide"}), 400
 
+    username = data.get("username", "").lstrip("@").strip().lower()
     if not username:
-        return jsonify({"error": "username required"}), 400
+        return jsonify({"error": "username requis"}), 400
 
-    username = username.lstrip("@").strip().lower()
+    # Validation basique du nom d'utilisateur
+    if not username.replace("_", "").isalnum() or len(username) > 50:
+        return jsonify({"error": "username invalide"}), 400
+
+    if not Path(COOKIES_PATH).exists():
+        return jsonify({"error": "Fichier cookies introuvable"}), 500
+
     DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-    # DOSSIER UTILISE PAR GALLERY-DL
     user_dir = DOWNLOAD_DIR / "twitter" / username
     zip_path = DOWNLOAD_DIR / f"{username}-media.zip"
 
-    PROGRESS[username] = {
-        "status": "starting",
-        "message": "Initialisation…",
-        "count": 0
-    }
+    # Supprimer un ancien ZIP pour éviter de servir un fichier périmé
+    if zip_path.exists():
+        try:
+            zip_path.unlink()
+        except OSError as e:
+            logger.warning(f"Impossible de supprimer l'ancien ZIP : {e}")
+
+    set_progress(username, "starting", "Initialisation…")
 
     cmd = [
-        sys.executable,
-        "-m",
-        "gallery_dl",
-        "--cookies",
-        "C:/Users/ASUS/Desktop/twitterX_media_down/cookies.txt",
-        "-d",
-        str(DOWNLOAD_DIR),
+        sys.executable, "-m", "gallery_dl",
+        "--cookies", COOKIES_PATH,
+        "-d", str(DOWNLOAD_DIR),
         f"https://x.com/{username}"
     ]
 
     try:
-        PROGRESS[username]["status"] = "downloading"
-        PROGRESS[username]["message"] = "Téléchargement des médias…"
+        set_progress(username, "downloading", "Téléchargement des médias…")
 
-        threading.Thread(
-            target=count_files,
-            args=(username, user_dir),
-            daemon=True
-        ).start()
+        threading.Thread(target=count_files, args=(username, user_dir), daemon=True).start()
 
-        subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL)
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=DOWNLOAD_TIMEOUT
+        )
+
+        if result.returncode != 0:
+            logger.error(f"gallery-dl stderr : {result.stderr}")
+            set_progress(username, "error", "Erreur gallery-dl")
+            cleanup_progress(username)
+            return jsonify({"error": "Échec du téléchargement", "detail": result.stderr[:300]}), 500
 
         if not user_dir.exists() or not any(user_dir.rglob("*")):
-            PROGRESS[username] = {
-                "status": "error",
-                "message": "Aucun média trouvé"
-            }
-            return jsonify({"error": "no media"}), 404
+            set_progress(username, "error", "Aucun média trouvé")
+            cleanup_progress(username)
+            return jsonify({"error": "Aucun média trouvé pour cet utilisateur"}), 404
 
-        PROGRESS[username]["status"] = "zipping"
-        PROGRESS[username]["message"] = "Création du ZIP…"
+        set_progress(username, "zipping", "Création du ZIP…")
 
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zipf:
             for file in user_dir.rglob("*"):
                 if file.is_file():
                     zipf.write(file, file.relative_to(user_dir))
 
-        PROGRESS[username]["status"] = "done"
-        PROGRESS[username]["message"] = "Téléchargement terminé"
+        set_progress(username, "done", "Téléchargement terminé")
+        cleanup_progress(username)
 
         return send_file(
             zip_path,
@@ -117,13 +172,23 @@ def download_media():
             mimetype="application/zip"
         )
 
-    except subprocess.CalledProcessError:
-        PROGRESS[username] = {
-            "status": "error",
-            "message": "Erreur lors du téléchargement"
-        }
-        return jsonify({"error": "download failed"}), 500
+    except subprocess.TimeoutExpired:
+        logger.error(f"Timeout pour {username}")
+        set_progress(username, "error", f"Timeout après {DOWNLOAD_TIMEOUT}s")
+        cleanup_progress(username)
+        return jsonify({"error": "Timeout dépassé"}), 504
 
+    except zipfile.BadZipFile as e:
+        logger.error(f"Erreur ZIP : {e}")
+        set_progress(username, "error", "Erreur lors de la création du ZIP")
+        cleanup_progress(username)
+        return jsonify({"error": "Erreur ZIP"}), 500
+
+    except Exception as e:
+        logger.exception(f"Erreur inattendue pour {username}")
+        set_progress(username, "error", "Erreur interne du serveur")
+        cleanup_progress(username)
+        return jsonify({"error": "Erreur interne"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
