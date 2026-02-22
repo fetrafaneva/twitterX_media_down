@@ -9,6 +9,8 @@ import json
 import threading
 import os
 import logging
+import time
+from threading import Lock
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -22,18 +24,45 @@ PROGRESS_LOCK = threading.Lock()
 COOKIES_PATH = "C:/Users/ASUS/Desktop/twitterX_media_down/cookies.txt"
 DOWNLOAD_TIMEOUT = 300  # secondes
 
+def count_files(username: str, user_dir: Path):
+    start     = time.time()
+    prev_count = 0
+    prev_time  = start
+
+    while True:
+        with PROGRESS_LOCK:
+            status = PROGRESS.get(username, {}).get("status")
+        if status != "downloading":
+            break
+
+        now = time.time()
+        if user_dir.exists():
+            count = sum(1 for f in user_dir.rglob("*") if f.is_file())
+            dt    = now - prev_time
+
+            speed = round((count - prev_count) / dt, 1) if dt > 0 else 0
+
+            with PROGRESS_LOCK:
+                if username in PROGRESS:
+                    PROGRESS[username]["count"]   = count
+                    PROGRESS[username]["speed"]   = speed        # ← nouveau
+                    PROGRESS[username]["elapsed"] = int(now - start)  # ← nouveau
+
+            prev_count = count
+            prev_time  = now
+
+        time.sleep(0.5)
 
 def set_progress(username: str, status: str, message: str, count: int | None = None):
     with PROGRESS_LOCK:
-        entry = {"status": status, "message": message}
-        if count is not None:
-            entry["count"] = count
-        elif username in PROGRESS:
-            entry["count"] = PROGRESS[username].get("count", 0)
-        else:
-            entry["count"] = 0
-        PROGRESS[username] = entry
-
+        prev = PROGRESS.get(username, {})  # ← récupère l'état précédent
+        PROGRESS[username] = {
+            "status":  status,
+            "message": message,
+            "count":   count if count is not None else prev.get("count", 0),
+            "speed":   prev.get("speed", 0),    # ← préservé depuis count_files
+            "elapsed": prev.get("elapsed", 0),  # ← préservé depuis count_files
+        }
 
 def cleanup_progress(username: str, delay: int = 30):
     """Supprime l'entrée PROGRESS après un délai pour éviter les fuites mémoire."""
