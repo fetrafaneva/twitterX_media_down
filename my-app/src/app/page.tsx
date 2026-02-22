@@ -171,7 +171,15 @@ export default function Home() {
   const gradClass = STATUS_COLORS[status] ?? STATUS_COLORS.downloading;
 
   return (
-    <main className="min-h-screen bg-white flex items-center justify-center p-4">
+    <main
+      className="relative min-h-screen flex items-center justify-center p-4"
+      style={{
+        backgroundImage: "url('/bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <div className="w-full max-w-md">
         {/* ── Card ─────────────────────────────────────────────── */}
         <div className="bg-white backdrop-blur-md rounded-2xl p-8">
