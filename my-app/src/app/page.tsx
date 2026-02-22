@@ -171,28 +171,21 @@ export default function Home() {
   const gradClass = STATUS_COLORS[status] ?? STATUS_COLORS.downloading;
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">
+    <main
+      className="relative min-h-screen flex items-center justify-center p-4"
+      style={{
+        backgroundImage: "url('/bg.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+        backgroundAttachment: "fixed",
+      }}
+    >
       <div className="w-full max-w-md">
         {/* ── Card ─────────────────────────────────────────────── */}
-        <div className="bg-white/5 backdrop-blur-md border border-white/10 rounded-2xl p-8 shadow-2xl">
+        <div className="bg-white backdrop-blur-md rounded-2xl p-8">
           {/* Header */}
           <div className="mb-8 text-center">
-            <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-500 to-cyan-400 shadow-lg mb-4">
-              <svg
-                className="w-7 h-7 text-white"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M9 19l3 3m0 0l3-3m-3 3V10"
-                />
-              </svg>
-            </div>
-            <h1 className="text-2xl font-bold text-white">
+            <h1 className="text-2xl font-bold text-slate-900">
               X Media Downloader
             </h1>
             <p className="text-slate-400 text-sm mt-1">
@@ -206,7 +199,7 @@ export default function Home() {
               @
             </span>
             <input
-              className="w-full bg-white/10 border border-white/20 text-white placeholder-slate-500 rounded-xl pl-9 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50"
+              className="w-full bg-white/10 border border-white/20 text-slate-500 placeholder-slate-500 rounded-xl pl-9 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50"
               placeholder="username"
               value={username}
               disabled={loading}
@@ -285,7 +278,7 @@ export default function Home() {
               <div className="grid grid-cols-3 gap-3">
                 {/* Fichiers */}
                 <div className="bg-white/5 border border-white/10 rounded-xl p-3 text-center">
-                  <div className="text-2xl font-bold text-white tabular-nums">
+                  <div className="text-2xl font-bold text-slate-500 tabular-nums">
                     {fileCount}
                   </div>
                   <div className="text-slate-400 text-xs mt-0.5">fichiers</div>
