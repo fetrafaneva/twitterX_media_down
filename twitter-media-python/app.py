@@ -18,6 +18,7 @@ CORS(app)
 DOWNLOAD_DIR = Path.home() / "Downloads" / "twitter_media"
 PROGRESS: dict = {}
 PROGRESS_LOCK = threading.Lock()
+ACTIVE_PROCESSES: dict[str, subprocess.Popen] = {}  # username → processus en cours
 COOKIES_PATH = "C:/Users/ASUS/Desktop/twitterX_media_down/cookies.txt"
 DOWNLOAD_TIMEOUT = 300  # secondes
 
@@ -113,6 +114,25 @@ def progress(username: str):
     return Response(event_stream(), mimetype="text/event-stream")
 
 
+# ── Cancel ────────────────────────────────────────────────────────────────────
+
+@app.route("/cancel/<username>", methods=["POST"])
+def cancel_download(username: str):
+    proc = ACTIVE_PROCESSES.get(username)
+    if proc and proc.poll() is None:  # processus encore actif
+        proc.terminate()
+        try:
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+        logger.info(f"Processus annulé pour {username}")
+
+    set_progress(username, "error", "Téléchargement annulé")
+    cleanup_progress(username)
+    ACTIVE_PROCESSES.pop(username, None)
+    return jsonify({"ok": True})
+
+
 # ── Download Media ─────────────────────────────────────────────────────────────
 
 @app.route("/media", methods=["POST"])
@@ -176,15 +196,35 @@ def download_media():
             daemon=True
         ).start()
 
-        result = subprocess.run(
+        # Popen (au lieu de run) pour pouvoir annuler via /cancel
+        proc = subprocess.Popen(
             cmd,
-            capture_output=True,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
             text=True,
-            timeout=DOWNLOAD_TIMEOUT
         )
+        ACTIVE_PROCESSES[username] = proc
 
-        if result.returncode != 0:
-            stderr = result.stderr
+        try:
+            _, stderr_output = proc.communicate(timeout=DOWNLOAD_TIMEOUT)
+        except subprocess.TimeoutExpired:
+            proc.kill()
+            proc.wait()
+            ACTIVE_PROCESSES.pop(username, None)
+            set_progress(username, "error", f"Timeout après {DOWNLOAD_TIMEOUT}s")
+            cleanup_progress(username)
+            return jsonify({"error": "Timeout dépassé"}), 504
+
+        ACTIVE_PROCESSES.pop(username, None)
+
+        # Annulation détectée (returncode < 0 = killed/terminated)
+        if proc.returncode < 0:
+            return jsonify({"error": "Annulé"}), 499
+
+        result_returncode = proc.returncode
+        stderr = stderr_output or ""
+
+        if result_returncode != 0:
 
             if "NameResolutionError" in stderr or "getaddrinfo failed" in stderr:
                 msg = "Impossible de joindre x.com — vérifiez votre connexion ou configurez un proxy"
@@ -223,12 +263,6 @@ def download_media():
             download_name=f"{username}-{media_type}-media.zip",
             mimetype="application/zip"
         )
-
-    except subprocess.TimeoutExpired:
-        logger.error(f"Timeout pour {username}")
-        set_progress(username, "error", f"Timeout après {DOWNLOAD_TIMEOUT}s")
-        cleanup_progress(username)
-        return jsonify({"error": "Timeout dépassé"}), 504
 
     except zipfile.BadZipFile as e:
         logger.error(f"Erreur ZIP : {e}")
