@@ -38,11 +38,26 @@ build/
 # Coverage reports
 coverage/
 
-# secrets
+# Secrets
 cookies.txt
 *.cookies.txt
 
-# python
+# gallery-dl downloads
+downloads/
+gallery-dl/
+*.zip
+
+# Python
 venv/
 __pycache__/
-downloads/
+*.pyc
+
+# OS
+.DS_Store
+Thumbs.db
+
+node_modules
+.next
+venv
+cookies.txt
+Downloads/twitter_media
