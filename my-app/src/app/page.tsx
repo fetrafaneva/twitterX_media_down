@@ -73,7 +73,7 @@ export default function Home() {
 
   const dark = theme === "dark";
 
-  // ── Demander permission notifications au 1er chargement ────────
+  // ── Demander permission notifications ──────────────────────────
   useEffect(() => {
     if (
       "Notification" in window &&
@@ -169,7 +169,7 @@ export default function Home() {
       const res = await fetch("http://127.0.0.1:5000/media", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, mediaType }), // ← mediaType envoyé
+        body: JSON.stringify({ username, mediaType }),
       });
 
       if (!res.ok) {
@@ -212,19 +212,20 @@ export default function Home() {
         backgroundAttachment: "fixed",
       }}
     >
+      {/* Overlay */}
       <div
-        className={`absolute inset-0 backdrop-blur-sm transition-colors duration-300 ${
-          dark ? "bg-black/50" : "bg-white/40"
+        className={`absolute inset-0 transition-colors duration-300 ${
+          dark ? "bg-black/80" : "bg-white/60"
         }`}
       />
 
       <div className="relative z-10 w-full max-w-md">
         <div
-          className={`backdrop-blur-md border rounded-2xl p-8 shadow-2xl transition-colors duration-300 ${
-            dark ? "bg-white/10 border-white/20" : "bg-white/80 border-white/60"
+          className={`border rounded-2xl p-8 shadow-2xl transition-colors duration-300 ${
+            dark ? "bg-black border-zinc-800" : "bg-white border-slate-200"
           }`}
         >
-          {/* ── Header + toggle thème ──────────────────────────── */}
+          {/* ── Header + toggle thème ─────────────────────────── */}
           <div className="mb-8 flex items-start justify-between">
             <div>
               <h1
@@ -239,12 +240,11 @@ export default function Home() {
               </p>
             </div>
 
-            {/* Toggle thème */}
             <button
               onClick={() => setTheme(dark ? "light" : "dark")}
               className={`p-2 rounded-xl border transition-all ${
                 dark
-                  ? "bg-white/10 border-white/20 text-yellow-300 hover:bg-white/20"
+                  ? "bg-zinc-900 border-zinc-700 text-yellow-300 hover:bg-zinc-800"
                   : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
               }`}
               title="Changer le thème"
@@ -253,7 +253,7 @@ export default function Home() {
             </button>
           </div>
 
-          {/* ── Sélecteur type de média ────────────────────────── */}
+          {/* ── Sélecteur type de média ───────────────────────── */}
           <div className="mb-4">
             <p
               className={`text-xs font-medium uppercase tracking-wider mb-2 ${
@@ -272,7 +272,7 @@ export default function Home() {
                     mediaType === opt.value
                       ? "bg-gradient-to-br from-blue-500 to-cyan-400 border-transparent text-white shadow-lg scale-105"
                       : dark
-                      ? "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
+                      ? "bg-zinc-900 border-zinc-700 text-slate-300 hover:bg-zinc-800"
                       : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
                   }`}
                 >
@@ -283,7 +283,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* ── Input ─────────────────────────────────────────── */}
+          {/* ── Input ────────────────────────────────────────── */}
           <div className="relative mb-4">
             <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
               @
@@ -291,7 +291,7 @@ export default function Home() {
             <input
               className={`w-full border rounded-xl pl-9 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 ${
                 dark
-                  ? "bg-white/10 border-white/20 text-white placeholder-slate-500"
+                  ? "bg-zinc-900 border-zinc-700 text-white placeholder-zinc-500"
                   : "bg-white border-slate-200 text-slate-800 placeholder-slate-400"
               }`}
               placeholder="username"
@@ -304,7 +304,7 @@ export default function Home() {
             />
           </div>
 
-          {/* ── Button ────────────────────────────────────────── */}
+          {/* ── Button ───────────────────────────────────────── */}
           <button
             onClick={handleDownload}
             disabled={loading || !isValid}
@@ -342,7 +342,7 @@ export default function Home() {
             )}
           </button>
 
-          {/* ── Progress ──────────────────────────────────────── */}
+          {/* ── Progress ─────────────────────────────────────── */}
           {loading && (
             <div className="mt-6 space-y-4">
               <div>
@@ -360,7 +360,7 @@ export default function Home() {
                 </div>
                 <div
                   className={`w-full rounded-full h-3 overflow-hidden ${
-                    dark ? "bg-white/10" : "bg-slate-200"
+                    dark ? "bg-zinc-800" : "bg-slate-200"
                   }`}
                 >
                   <div
@@ -395,7 +395,7 @@ export default function Home() {
                     key={i}
                     className={`border rounded-xl p-3 text-center ${
                       dark
-                        ? "bg-white/5 border-white/10"
+                        ? "bg-zinc-900 border-zinc-800"
                         : "bg-slate-50 border-slate-200"
                     }`}
                   >
@@ -413,7 +413,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Done ──────────────────────────────────────────── */}
+          {/* ── Done ─────────────────────────────────────────── */}
           {status === "done" && !loading && (
             <div className="mt-6 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
               <div className="text-emerald-400 font-semibold">
@@ -426,7 +426,7 @@ export default function Home() {
             </div>
           )}
 
-          {/* ── Error ─────────────────────────────────────────── */}
+          {/* ── Error ────────────────────────────────────────── */}
           {error && (
             <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
               <span className="text-red-400 text-lg">⚠</span>
