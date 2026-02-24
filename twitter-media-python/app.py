@@ -154,6 +154,25 @@ def download_media():
 
     set_progress(username, "starting", "Initialisation…")
 
+    # Filtres gallery-dl selon le type choisi
+    FILTERS = {
+        "images": '--filter \'extension in ("jpg","jpeg","png","webp")\'',
+        "videos": '--filter \'extension in ("mp4","mov","avi","mkv")\'',
+        "gifs":   '--filter \'extension in ("gif",)\'',
+        "all":    None,
+    }
+
+    cmd = [
+        sys.executable, "-m", "gallery_dl",
+        "--cookies", COOKIES_PATH,
+        "-d", str(DOWNLOAD_DIR),
+    ]
+
+    # Ajouter le filtre si nécessaire
+    filter_arg = FILTERS.get(media_type)
+    if filter_arg:
+        cmd += ["--filter", filter_arg.replace('--filter ', '')]
+
     cmd = [
         sys.executable, "-m", "gallery_dl",
         "--cookies", COOKIES_PATH,
