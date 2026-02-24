@@ -62,6 +62,7 @@ export default function Home() {
   const prevTimeRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const startTimeRef = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const dark = theme === "dark";
 
@@ -141,6 +142,21 @@ export default function Home() {
     return () => source.close();
   }, [loading, username]);
 
+  const handleCancel = async () => {
+    abortControllerRef.current?.abort();
+    const clean = username.replace("@", "").trim().toLowerCase();
+    try {
+      await fetch(`http://127.0.0.1:5000/cancel/${clean}`, { method: "POST" });
+    } catch {
+      /* Flask injoignable, on ignore */
+    }
+    setLoading(false);
+    setStatus("idle");
+    setProgress(0);
+    setMessage("");
+    setError("Téléchargement annulé");
+  };
+
   const handleDownload = async () => {
     setError("");
     setMessage("");
@@ -153,11 +169,14 @@ export default function Home() {
     prevTimeRef.current = 0;
     setLoading(true);
 
+    abortControllerRef.current = new AbortController();
+
     try {
       const res = await fetch("http://127.0.0.1:5000/media", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, mediaType }),
+        signal: abortControllerRef.current.signal,
       });
 
       if (!res.ok) {
@@ -178,6 +197,7 @@ export default function Home() {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return; // annulé volontairement
       const msg = err instanceof Error ? err.message : "Erreur réseau inconnue";
       setError(msg);
       setProgress(0);
@@ -304,47 +324,64 @@ export default function Home() {
             />
           </div>
 
-          {/* ── Bouton ────────────────────────────────────────────── */}
-          <button
-            onClick={handleDownload}
-            disabled={loading || !isValid}
-            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
-              loading || !isValid
-                ? dark
-                  ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : dark
-                ? "bg-white text-black hover:bg-gray-100 active:scale-[0.98]"
-                : "bg-black text-white hover:bg-gray-800 active:scale-[0.98]"
-            }`}
-          >
-            {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg
-                  className="animate-spin w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                >
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  />
-                </svg>
-                En cours…
-              </span>
-            ) : (
-              "Télécharger"
+          {/* ── Boutons ───────────────────────────────────────────── */}
+          <div className={`flex gap-2 ${loading ? "" : ""}`}>
+            {/* Télécharger */}
+            <button
+              onClick={handleDownload}
+              disabled={loading || !isValid}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
+                loading || !isValid
+                  ? dark
+                    ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                  : dark
+                  ? "bg-white text-black hover:bg-gray-100 active:scale-[0.98]"
+                  : "bg-black text-white hover:bg-gray-800 active:scale-[0.98]"
+              }`}
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg
+                    className="animate-spin w-3.5 h-3.5"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8v8z"
+                    />
+                  </svg>
+                  En cours…
+                </span>
+              ) : (
+                "Télécharger"
+              )}
+            </button>
+
+            {/* Annuler — visible uniquement pendant le téléchargement */}
+            {loading && (
+              <button
+                onClick={handleCancel}
+                className={`px-4 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 active:scale-[0.98] ${
+                  dark
+                    ? "bg-zinc-800 text-red-400 hover:bg-red-950 hover:text-red-300 border border-zinc-700"
+                    : "bg-gray-100 text-red-500 hover:bg-red-50 hover:text-red-600 border border-gray-200"
+                }`}
+              >
+                ✕ Arrêter
+              </button>
             )}
-          </button>
+          </div>
 
           {/* ── Progress ──────────────────────────────────────────── */}
           {loading && (
