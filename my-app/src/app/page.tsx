@@ -20,14 +20,6 @@ const PROGRESS_MAP: Record<string, number> = {
   error: 0,
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  starting: "from-violet-500 to-indigo-500",
-  downloading: "from-blue-500 to-cyan-400",
-  zipping: "from-amber-400 to-orange-500",
-  done: "from-emerald-400 to-green-500",
-  error: "from-red-500 to-rose-500",
-};
-
 const MEDIA_OPTIONS: { value: MediaType; label: string; icon: string }[] = [
   { value: "all", label: "Tout", icon: "⊞" },
   { value: "images", label: "Photos", icon: "🖼" },
@@ -43,7 +35,7 @@ function formatDuration(seconds: number) {
 function sendNotification(fileCount: number, username: string) {
   if (!("Notification" in window)) return;
   if (Notification.permission === "granted") {
-    new Notification("✅ Téléchargement terminé", {
+    new Notification("Téléchargement terminé", {
       body: `${fileCount} fichier${
         fileCount > 1 ? "s" : ""
       } de @${username} téléchargés`,
@@ -63,7 +55,7 @@ export default function Home() {
   const [elapsed, setElapsed] = useState(0);
   const [error, setError] = useState("");
   const [mediaType, setMediaType] = useState<MediaType>("all");
-  const [theme, setTheme] = useState<Theme>("dark");
+  const [theme, setTheme] = useState<Theme>("light");
   const [notifAsked, setNotifAsked] = useState(false);
 
   const prevCountRef = useRef(0);
@@ -73,7 +65,6 @@ export default function Home() {
 
   const dark = theme === "dark";
 
-  // ── Demander permission notifications au 1er chargement ────────
   useEffect(() => {
     if (
       "Notification" in window &&
@@ -85,7 +76,6 @@ export default function Home() {
     }
   }, []);
 
-  // ── Timer elapsed ──────────────────────────────────────────────
   useEffect(() => {
     if (loading) {
       startTimeRef.current = Date.now();
@@ -100,7 +90,6 @@ export default function Home() {
     };
   }, [loading]);
 
-  // ── SSE ────────────────────────────────────────────────────────
   useEffect(() => {
     if (!loading || !username) return;
 
@@ -152,7 +141,6 @@ export default function Home() {
     return () => source.close();
   }, [loading, username]);
 
-  // ── Download ───────────────────────────────────────────────────
   const handleDownload = async () => {
     setError("");
     setMessage("");
@@ -169,7 +157,7 @@ export default function Home() {
       const res = await fetch("http://127.0.0.1:5000/media", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, mediaType }), // ← mediaType envoyé
+        body: JSON.stringify({ username, mediaType }),
       });
 
       if (!res.ok) {
@@ -200,99 +188,111 @@ export default function Home() {
   };
 
   const isValid = username.replace("@", "").trim().length > 0;
-  const gradClass = STATUS_COLORS[status] ?? STATUS_COLORS.downloading;
 
   return (
     <main
-      className="relative min-h-screen flex items-center justify-center p-4 transition-colors duration-300"
-      style={{
-        backgroundImage: "url('/bg.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center",
-        backgroundAttachment: "fixed",
-      }}
+      className={`min-h-screen flex items-center justify-center p-4 transition-colors duration-500 ${
+        dark ? "bg-zinc-950" : "bg-gray-50"
+      }`}
     >
-      <div
-        className={`absolute inset-0 backdrop-blur-sm transition-colors duration-300 ${
-          dark ? "bg-black/50" : "bg-white/40"
-        }`}
-      />
-
-      <div className="relative z-10 w-full max-w-md">
+      <div className="w-full max-w-sm">
+        {/* ── Card ────────────────────────────────────────────────── */}
         <div
-          className={`backdrop-blur-md border rounded-2xl p-8 shadow-2xl transition-colors duration-300 ${
-            dark ? "bg-white/10 border-white/20" : "bg-white/80 border-white/60"
+          className={`rounded-3xl p-7 transition-all duration-500 ${
+            dark
+              ? "bg-zinc-900 border border-zinc-800 shadow-2xl shadow-black/60"
+              : "bg-white border border-gray-200 shadow-lg shadow-gray-100"
           }`}
         >
-          {/* ── Header + toggle thème ──────────────────────────── */}
-          <div className="mb-8 flex items-start justify-between">
-            <div>
-              <h1
-                className={`text-2xl font-bold ${
-                  dark ? "text-white" : "text-slate-800"
+          {/* ── Header ────────────────────────────────────────────── */}
+          <div className="flex items-center justify-between mb-7">
+            <div className="flex items-center gap-3">
+              <div
+                className={`w-9 h-9 rounded-xl flex items-center justify-center font-black text-base select-none ${
+                  dark ? "bg-white text-black" : "bg-black text-white"
                 }`}
               >
-                X Media Downloader
-              </h1>
-              <p className="text-slate-400 text-sm mt-1">
-                Téléchargez les médias d'un profil X
-              </p>
+                𝕏
+              </div>
+              <div>
+                <h1
+                  className={`text-sm font-semibold ${
+                    dark ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  Media Downloader
+                </h1>
+                <p
+                  className={`text-xs ${
+                    dark ? "text-zinc-500" : "text-gray-400"
+                  }`}
+                >
+                  Profil X · gallery-dl
+                </p>
+              </div>
             </div>
 
-            {/* Toggle thème */}
             <button
               onClick={() => setTheme(dark ? "light" : "dark")}
-              className={`p-2 rounded-xl border transition-all ${
+              className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition-all ${
                 dark
-                  ? "bg-white/10 border-white/20 text-yellow-300 hover:bg-white/20"
-                  : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
+                  ? "bg-zinc-800 hover:bg-zinc-700 text-zinc-400"
+                  : "bg-gray-100 hover:bg-gray-200 text-gray-500"
               }`}
-              title="Changer le thème"
             >
               {dark ? "☀️" : "🌙"}
             </button>
           </div>
 
-          {/* ── Sélecteur type de média ────────────────────────── */}
-          <div className="mb-4">
-            <p
-              className={`text-xs font-medium uppercase tracking-wider mb-2 ${
-                dark ? "text-slate-400" : "text-slate-500"
-              }`}
-            >
-              Type de média
-            </p>
-            <div className="grid grid-cols-4 gap-2">
-              {MEDIA_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  onClick={() => setMediaType(opt.value)}
-                  disabled={loading}
-                  className={`flex flex-col items-center gap-1 py-2 px-1 rounded-xl border text-xs font-medium transition-all disabled:opacity-40 ${
-                    mediaType === opt.value
-                      ? "bg-gradient-to-br from-blue-500 to-cyan-400 border-transparent text-white shadow-lg scale-105"
-                      : dark
-                      ? "bg-white/5 border-white/10 text-slate-300 hover:bg-white/10"
-                      : "bg-slate-100 border-slate-200 text-slate-600 hover:bg-slate-200"
-                  }`}
-                >
-                  <span className="text-lg">{opt.icon}</span>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+          {/* ── Divider ───────────────────────────────────────────── */}
+          <div
+            className={`h-px mb-6 ${dark ? "bg-zinc-800" : "bg-gray-100"}`}
+          />
+
+          {/* ── Sélecteur média ───────────────────────────────────── */}
+          <p
+            className={`text-xs font-medium mb-2 ${
+              dark ? "text-zinc-500" : "text-gray-400"
+            }`}
+          >
+            Type de média
+          </p>
+          <div className="grid grid-cols-4 gap-1.5 mb-5">
+            {MEDIA_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => setMediaType(opt.value)}
+                disabled={loading}
+                className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-xs font-medium transition-all duration-150 disabled:opacity-40 ${
+                  mediaType === opt.value
+                    ? dark
+                      ? "bg-white text-black shadow-sm"
+                      : "bg-black text-white shadow-sm"
+                    : dark
+                    ? "bg-zinc-800 text-zinc-500 hover:bg-zinc-700 hover:text-zinc-300"
+                    : "bg-gray-100 text-gray-500 hover:bg-gray-200 hover:text-gray-800"
+                }`}
+              >
+                <span className="text-base leading-none">{opt.icon}</span>
+                <span>{opt.label}</span>
+              </button>
+            ))}
           </div>
 
-          {/* ── Input ─────────────────────────────────────────── */}
-          <div className="relative mb-4">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-medium">
+          {/* ── Input ─────────────────────────────────────────────── */}
+          <div className="relative mb-3">
+            <span
+              className={`absolute left-3.5 top-1/2 -translate-y-1/2 text-sm ${
+                dark ? "text-zinc-600" : "text-gray-400"
+              }`}
+            >
               @
             </span>
             <input
-              className={`w-full border rounded-xl pl-9 pr-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition disabled:opacity-50 ${
+              className={`w-full rounded-xl pl-8 pr-4 py-2.5 text-sm transition-all duration-200 focus:outline-none disabled:opacity-50 ${
                 dark
-                  ? "bg-white/10 border-white/20 text-white placeholder-slate-500"
-                  : "bg-white border-slate-200 text-slate-800 placeholder-slate-400"
+                  ? "bg-zinc-800 border border-zinc-700 text-white placeholder-zinc-600 focus:border-zinc-500"
+                  : "bg-gray-50 border border-gray-200 text-gray-900 placeholder-gray-400 focus:border-gray-300 focus:bg-white"
               }`}
               placeholder="username"
               value={username}
@@ -304,20 +304,24 @@ export default function Home() {
             />
           </div>
 
-          {/* ── Button ────────────────────────────────────────── */}
+          {/* ── Bouton ────────────────────────────────────────────── */}
           <button
             onClick={handleDownload}
             disabled={loading || !isValid}
-            className={`w-full py-3 rounded-xl font-semibold text-white transition-all duration-200 shadow-lg ${
+            className={`w-full py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
               loading || !isValid
-                ? "bg-slate-400 opacity-50 cursor-not-allowed"
-                : "bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 hover:scale-[1.02] active:scale-100"
+                ? dark
+                  ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                  : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : dark
+                ? "bg-white text-black hover:bg-gray-100 active:scale-[0.98]"
+                : "bg-black text-white hover:bg-gray-800 active:scale-[0.98]"
             }`}
           >
             {loading ? (
               <span className="flex items-center justify-center gap-2">
                 <svg
-                  className="animate-spin w-4 h-4"
+                  className="animate-spin w-3.5 h-3.5"
                   viewBox="0 0 24 24"
                   fill="none"
                 >
@@ -335,105 +339,153 @@ export default function Home() {
                     d="M4 12a8 8 0 018-8v8z"
                   />
                 </svg>
-                Téléchargement en cours…
+                En cours…
               </span>
             ) : (
               "Télécharger"
             )}
           </button>
 
-          {/* ── Progress ──────────────────────────────────────── */}
+          {/* ── Progress ──────────────────────────────────────────── */}
           {loading && (
             <div className="mt-6 space-y-4">
+              {/* Barre fine */}
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <span className="text-slate-400 text-xs font-medium uppercase tracking-wider">
+                <div className="flex justify-between items-center mb-1.5">
+                  <span
+                    className={`text-xs ${
+                      dark ? "text-zinc-600" : "text-gray-400"
+                    }`}
+                  >
                     {message || "En cours…"}
                   </span>
                   <span
-                    className={`font-bold tabular-nums ${
-                      dark ? "text-white" : "text-slate-800"
+                    className={`text-xs font-semibold tabular-nums ${
+                      dark ? "text-zinc-300" : "text-gray-600"
                     }`}
                   >
                     {progress}%
                   </span>
                 </div>
                 <div
-                  className={`w-full rounded-full h-3 overflow-hidden ${
-                    dark ? "bg-white/10" : "bg-slate-200"
+                  className={`w-full rounded-full h-1 overflow-hidden ${
+                    dark ? "bg-zinc-800" : "bg-gray-100"
                   }`}
                 >
                   <div
-                    className={`h-3 rounded-full bg-gradient-to-r ${gradClass} transition-all duration-700 ease-out relative`}
+                    className={`h-1 rounded-full transition-all duration-700 ease-out ${
+                      dark ? "bg-white" : "bg-black"
+                    }`}
                     style={{ width: `${progress}%` }}
-                  >
-                    <span className="absolute inset-0 bg-white/20 animate-pulse rounded-full" />
-                  </div>
+                  />
                 </div>
               </div>
 
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3">
+              {/* Stats 3 colonnes */}
+              <div className={`h-px ${dark ? "bg-zinc-800" : "bg-gray-100"}`} />
+              <div className="grid grid-cols-3">
                 {[
-                  {
-                    value: fileCount,
-                    color: dark ? "text-white" : "text-slate-800",
-                    label: "fichiers",
-                  },
-                  {
-                    value: speed > 0 ? speed : "—",
-                    color: "text-cyan-500",
-                    label: "fichiers/s",
-                  },
-                  {
-                    value: formatDuration(elapsed),
-                    color: "text-violet-500",
-                    label: "écoulé",
-                  },
+                  { value: fileCount, label: "fichiers" },
+                  { value: speed > 0 ? speed : "—", label: "fich./sec" },
+                  { value: formatDuration(elapsed), label: "écoulé" },
                 ].map((stat, i) => (
                   <div
                     key={i}
-                    className={`border rounded-xl p-3 text-center ${
-                      dark
-                        ? "bg-white/5 border-white/10"
-                        : "bg-slate-50 border-slate-200"
+                    className={`flex flex-col items-center py-1 ${
+                      i > 0
+                        ? dark
+                          ? "border-l border-zinc-800"
+                          : "border-l border-gray-100"
+                        : ""
                     }`}
                   >
-                    <div
-                      className={`text-2xl font-bold tabular-nums ${stat.color}`}
+                    <span
+                      className={`text-lg font-bold tabular-nums ${
+                        dark ? "text-white" : "text-gray-900"
+                      }`}
                     >
                       {stat.value}
-                    </div>
-                    <div className="text-slate-400 text-xs mt-0.5">
+                    </span>
+                    <span
+                      className={`text-xs ${
+                        dark ? "text-zinc-600" : "text-gray-400"
+                      }`}
+                    >
                       {stat.label}
-                    </div>
+                    </span>
                   </div>
                 ))}
               </div>
             </div>
           )}
 
-          {/* ── Done ──────────────────────────────────────────── */}
+          {/* ── Done ──────────────────────────────────────────────── */}
           {status === "done" && !loading && (
-            <div className="mt-6 bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4 text-center">
-              <div className="text-emerald-400 font-semibold">
-                ✓ Téléchargement terminé
-              </div>
-              <div className="text-slate-400 text-sm mt-1">
-                {fileCount} fichier{fileCount > 1 ? "s" : ""} en{" "}
-                {formatDuration(elapsed)}
+            <div
+              className={`mt-5 rounded-2xl px-4 py-3 flex items-center gap-3 ${
+                dark ? "bg-zinc-800" : "bg-gray-50 border border-gray-200"
+              }`}
+            >
+              <span
+                className={`text-sm ${dark ? "text-white" : "text-gray-900"}`}
+              >
+                ✓
+              </span>
+              <div>
+                <p
+                  className={`text-sm font-medium ${
+                    dark ? "text-white" : "text-gray-900"
+                  }`}
+                >
+                  Terminé
+                </p>
+                <p
+                  className={`text-xs ${
+                    dark ? "text-zinc-500" : "text-gray-400"
+                  }`}
+                >
+                  {fileCount} fichier{fileCount > 1 ? "s" : ""} ·{" "}
+                  {formatDuration(elapsed)}
+                </p>
               </div>
             </div>
           )}
 
-          {/* ── Error ─────────────────────────────────────────── */}
+          {/* ── Error ─────────────────────────────────────────────── */}
           {error && (
-            <div className="mt-4 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 flex items-start gap-3">
-              <span className="text-red-400 text-lg">⚠</span>
-              <p className="text-red-300 text-sm">{error}</p>
+            <div
+              className={`mt-4 rounded-2xl px-4 py-3 flex items-start gap-2.5 ${
+                dark
+                  ? "bg-red-950/50 border border-red-900/40"
+                  : "bg-red-50 border border-red-100"
+              }`}
+            >
+              <span
+                className={`text-xs mt-0.5 ${
+                  dark ? "text-red-500" : "text-red-400"
+                }`}
+              >
+                ⚠
+              </span>
+              <p
+                className={`text-xs leading-relaxed ${
+                  dark ? "text-red-400" : "text-red-500"
+                }`}
+              >
+                {error}
+              </p>
             </div>
           )}
         </div>
+
+        {/* ── Footer ────────────────────────────────────────────────── */}
+        <p
+          className={`text-center text-xs mt-4 ${
+            dark ? "text-zinc-700" : "text-gray-300"
+          }`}
+        >
+          Propulsé par gallery-dl
+        </p>
       </div>
     </main>
   );
