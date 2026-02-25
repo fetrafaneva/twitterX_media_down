@@ -21,7 +21,7 @@ const PROGRESS_MAP: Record<string, number> = {
 };
 
 const MEDIA_OPTIONS: { value: MediaType; label: string; icon: string }[] = [
-  { value: "all", label: "Tout", icon: "⊞" },
+  { value: "all", label: "All", icon: "⊞" },
   { value: "images", label: "Photos", icon: "🖼" },
   { value: "videos", label: "Vidéos", icon: "🎬" },
   { value: "gifs", label: "GIFs", icon: "🎞" },
@@ -275,7 +275,7 @@ export default function Home() {
               dark ? "text-zinc-500" : "text-gray-400"
             }`}
           >
-            Type de média
+            Media type
           </p>
           <div className="grid grid-cols-4 gap-1.5 mb-5">
             {MEDIA_OPTIONS.map((opt) => (
@@ -364,7 +364,7 @@ export default function Home() {
                   En cours…
                 </span>
               ) : (
-                "Télécharger"
+                "Download"
               )}
             </button>
 
