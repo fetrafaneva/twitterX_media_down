@@ -1,1 +1,1 @@
-your_twiter_cookies
+your_twiter_cookies (exported by using Get cookies.txt and rename the file cookies.txt)
