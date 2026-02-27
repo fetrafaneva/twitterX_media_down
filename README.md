@@ -31,3 +31,23 @@ A full-stack web app to download all media (photos, videos, GIFs) from any X (Tw
 - **Python** 3.10+
 - **gallery-dl** — `pip install gallery-dl`
 - A valid **X/Twitter cookies file** (for authenticated downloads)
+
+# Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone https://github.com/your-username/x-media-downloader.git
+cd x-media-downloader
+```
+
+### 2. Configure the backend
+
+Open `app.py` and update the cookies path to match your system:
+
+```python
+COOKIES_PATH = "C:/Users/YourName/path/to/cookies.txt"
+```
+
+> **How to get your cookies file:**
+> Use a browser extension like [Get cookies.txt LOCALLY](https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) while logged into X, then export as `cookies.txt`.
