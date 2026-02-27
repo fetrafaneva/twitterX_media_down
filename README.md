@@ -2,6 +2,12 @@
 
 A full-stack web app to download all media (photos, videos, GIFs) from any X (Twitter) profile as a ZIP file, powered by [gallery-dl](https://github.com/mikf/gallery-dl).
 
+## ⚠️ Disclaimer
+
+This project is intended for **personal use only**.
+
+It is your responsibility to ensure that your use of this tool complies with [X's Terms of Service](https://twitter.com/en/tos) and the applicable laws in your country. Do not use this tool to download, redistribute, or commercially exploit content that belongs to others without their explicit permission. The author takes no responsibility for any misuse of this software.
+
 ---
 
 ## Features
