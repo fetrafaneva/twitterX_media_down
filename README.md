@@ -8,7 +8,7 @@ A full-stack web app to download all media (photos, videos, GIFs) from any X (Tw
 
 This project is intended for **personal use only**.
 
-It is your responsibility to ensure that your use of this tool complies with [X's Terms of Service](https://twitter.com/en/tos) and the applicable laws in your country. Do not use this tool to download, redistribute, or commercially exploit content that belongs to others without their explicit permission. The author takes no responsibility for any misuse of this software.
+It is your responsibility to ensure that your use of this tool complies with [X's Terms of Service](https://twitter.com/en/tos) and the applicable laws in your country. Do not use this tool to download, redistribute, or commercially exploit content that belongs to others without their explicit permission. I takes no responsibility for any misuse of this software.
 
 ---
 
@@ -164,3 +164,9 @@ X requires authentication to access media from most profiles. You must provide a
 | `Rate limit reached` | Too many requests to X | Wait a few minutes before trying again |
 
 ---
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request.
+
+If this project helps you, consider starring the repository!
