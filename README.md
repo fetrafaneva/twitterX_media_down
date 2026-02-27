@@ -51,3 +51,39 @@ COOKIES_PATH = "C:/Users/YourName/path/to/cookies.txt"
 
 > **How to get your cookies file:**
 > Use a browser extension like [Get cookies.txt LOCALLY](https://chrome.google.com/webstore/detail/get-cookiestxt-locally/cclelndahbckbenkjhflpdbgdldlbecc) while logged into X, then export as `cookies.txt`.
+
+### 3. Start the Flask backend
+
+```bash
+pip install flask flask-cors gallery-dl
+python app.py
+```
+
+The API will run on `http://127.0.0.1:5000`.
+
+### 4. Start the Next.js frontend
+
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+---
+
+## Project Structure
+
+```
+x-media-downloader/
+├── app/
+│   ├── page.tsx          # Main UI component
+│   └── api/
+│       └── route.ts      # Next.js API route (proxy to Flask)
+├── public/
+│   └── bg.jpg            # Background image
+├── app.py                # Flask backend
+└── README.md
+```
+
+---
