@@ -15,3 +15,19 @@ A full-stack web app to download all media (photos, videos, GIFs) from any X (Tw
 - **EN / FR language** — switch between English and French
 
 ---
+## Tech Stack
+
+| Layer    | Technology                          |
+|----------|-------------------------------------|
+| Frontend | Next.js 14 · TypeScript · Tailwind  |
+| Backend  | Python · Flask · gallery-dl         |
+| Protocol | REST + Server-Sent Events (SSE)     |
+
+---
+
+## Prerequisites
+
+- **Node.js** 18+
+- **Python** 3.10+
+- **gallery-dl** — `pip install gallery-dl`
+- A valid **X/Twitter cookies file** (for authenticated downloads)
