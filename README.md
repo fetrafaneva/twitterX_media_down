@@ -130,7 +130,7 @@ Kills the running gallery-dl process for the given user.
 
 ---
 
-## ⚙️ Configuration
+## Configuration
 
 | Variable           | Location  | Description                              | Default                     |
 |--------------------|-----------|------------------------------------------|-----------------------------|
@@ -143,5 +143,16 @@ Kills the running gallery-dl process for the given user.
 ## Notes on Authentication
 
 X requires authentication to access media from most profiles. You must provide a valid `cookies.txt` file exported from a logged-in X session. The cookies are passed directly to gallery-dl and are never stored or transmitted elsewhere.
+
+---
+
+## Common Errors
+
+| Error | Cause | Fix |
+|-------|-------|-----|
+| `Cannot reach x.com` | DNS/network issue or X is blocked in your region | Use a VPN or configure a proxy with `--proxy` |
+| `Invalid or expired cookies` | Cookies have expired | Re-export your cookies from the browser |
+| `User not found on X` | Username doesn't exist or profile is private | Check the username or use an account that follows the profile |
+| `Rate limit reached` | Too many requests to X | Wait a few minutes before trying again |
 
 ---
