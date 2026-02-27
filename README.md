@@ -76,14 +76,51 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ```
 x-media-downloader/
-├── app/
+├── my-app/src/app
 │   ├── page.tsx          # Main UI component
 │   └── api/
 │       └── route.ts      # Next.js API route (proxy to Flask)
-├── public/
-│   └── bg.jpg            # Background image
-├── app.py                # Flask backend
+├── twitter-media-python/
+│   └── venv            # Background image
+│   └── app.py            # Flask backend
 └── README.md
 ```
+
+---
+
+## API Reference
+
+### `POST /media`
+Starts the media download for a given username.
+
+**Body:**
+```json
+{
+  "username": "elonmusk",
+  "mediaType": "all"
+}
+```
+
+`mediaType` accepts: `"all"` · `"images"` · `"videos"` · `"gifs"`
+
+**Response:** `application/zip` file stream
+
+---
+
+### `GET /progress/:username`
+SSE stream that emits real-time download progress.
+
+**Event payload:**
+```json
+{
+  "status": "downloading",
+  "message": "Downloading media…",
+  "count": 42,
+  "speed": 3.2,
+  "elapsed": 18
+}
+```
+
+`status` values: `starting` · `downloading` · `zipping` · `done` · `error`
 
 ---
