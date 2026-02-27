@@ -124,3 +124,24 @@ SSE stream that emits real-time download progress.
 `status` values: `starting` · `downloading` · `zipping` · `done` · `error`
 
 ---
+
+### `POST /cancel/:username`
+Kills the running gallery-dl process for the given user.
+
+---
+
+## ⚙️ Configuration
+
+| Variable           | Location  | Description                              | Default                     |
+|--------------------|-----------|------------------------------------------|-----------------------------|
+| `COOKIES_PATH`     | `app.py`  | Path to your X/Twitter cookies file      | *(required)*                |
+| `DOWNLOAD_DIR`     | `app.py`  | Directory where media is saved           | `~/Downloads/twitter_media` |
+| `DOWNLOAD_TIMEOUT` | `app.py`  | Max seconds before aborting gallery-dl   | `300`                       |
+
+---
+
+## Notes on Authentication
+
+X requires authentication to access media from most profiles. You must provide a valid `cookies.txt` file exported from a logged-in X session. The cookies are passed directly to gallery-dl and are never stored or transmitted elsewhere.
+
+---
